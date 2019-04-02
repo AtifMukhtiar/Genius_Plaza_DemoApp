@@ -1,8 +1,12 @@
 package com.jadgroup.demoapp.resources;
 
 import android.app.Activity;
+import android.content.Intent;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.view.View;
+import android.widget.Toast;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
@@ -14,6 +18,7 @@ import com.jadgroup.demoapp.models.RootModel;
 import com.jadgroup.demoapp.models.User;
 import com.jadgroup.demoapp.networks.ApisResponse;
 import com.jadgroup.demoapp.networks.NetworkCallBack;
+import com.jadgroup.demoapp.ui.AddUser;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;
@@ -21,17 +26,17 @@ import java.util.List;
 
 import retrofit2.Response;
 
-public class MainActivityResource implements NetworkCallBack {
+public class MainActivityResource implements NetworkCallBack, View.OnClickListener {
 
     Activity context;
+    FloatingActionButton fb_addUser;
     RecyclerView rv_users;
     UserAdapter userAdapter;
-    ApisResponse apisResponse;
+    ApisResponse apisResponse = new ApisResponse();
     ArrayList<User> usersList;
 
     public MainActivityResource(Activity context) {
         this.context = context;
-        apisResponse = new ApisResponse();
         usersList = new ArrayList<>();
         initResource();
         setTextViewText();
@@ -39,6 +44,7 @@ public class MainActivityResource implements NetworkCallBack {
     }
 
     private void initResource() {
+        fb_addUser = context.findViewById(R.id.fb_addUser);
         rv_users = context.findViewById(R.id.rv_users);
         userAdapter = new UserAdapter(context, usersList);
         rv_users.setLayoutManager(new LinearLayoutManager(context));
@@ -54,7 +60,7 @@ public class MainActivityResource implements NetworkCallBack {
     }
 
     private void addViewListener() {
-
+        fb_addUser.setOnClickListener(this);
     }
 
     @Override
@@ -64,8 +70,11 @@ public class MainActivityResource implements NetworkCallBack {
             }.getType();
             Data usersData = new Gson().fromJson(response.body(), listType);
             RootModel.getInstance().setData(usersData);
-            userAdapter.addList((ArrayList<User>) RootModel.getInstance().getData().getData());
-            userAdapter.notifyDataSetChanged();
+            if (userAdapter != null) {
+                userAdapter.addList((ArrayList<User>) RootModel.getInstance().getData().getData());
+                userAdapter.notifyDataSetChanged();
+            }
+
 
         } else {
             /**
@@ -74,5 +83,26 @@ public class MainActivityResource implements NetworkCallBack {
             System.out.print("Internet Error");
         }
 
+    }
+
+    @Override
+    public void onClick(View view) {
+        switch (view.getId()) {
+            case R.id.fb_addUser:
+                newUserActivity();
+                break;
+        }
+    }
+
+    private void newUserActivity() {
+        context.startActivity(new Intent(context, AddUser.class));
+    }
+
+
+    public void onResume() {
+        apisResponse.getUsers(this);
+    }
+
+    public void onStop() {
     }
 }
